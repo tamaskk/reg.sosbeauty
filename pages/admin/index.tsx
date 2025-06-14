@@ -5,13 +5,18 @@ import Head from 'next/head';
 import { Tab } from '@headlessui/react';
 import { EyeIcon, CheckIcon, TrashIcon } from '@heroicons/react/24/outline';
 import ProviderViewModal from '@/components/ProviderViewModal';
-import { IProvider } from '@/lib/types/provider';
+import { Provider } from '@/lib/types/provider';
 
-interface ProviderWithMedia extends IProvider {
+interface ProviderWithMedia extends Provider {
   media: {
     images: Array<{
       url: string;
       name: string;
+      isMain: boolean;
+    }>;
+    videos: Array<{
+      url: string;
+      isMain: boolean;
     }>;
   };
 }
