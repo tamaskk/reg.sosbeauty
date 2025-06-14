@@ -19,7 +19,18 @@ interface RawProvider {
     images?: Array<string | { url: string; name?: string; isMain?: boolean }>;
     videos?: Array<string | { url: string; isMain?: boolean }>;
   };
-  [key: string]: any;
+  phoneNumber?: string;
+  houseNumber?: string;
+  maxPrice?: number;
+  minPrice?: number;
+  email?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+  instagram?: string;
+  facebook?: string;
+  tiktok?: string;
+  success?: boolean;
+  [key: string]: unknown;
 }
 
 interface ProviderWithMedia extends Provider {
