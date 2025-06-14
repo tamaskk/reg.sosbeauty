@@ -1,7 +1,7 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState, useEffect } from 'react';
 import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
-import { IProvider } from '@/lib/types/provider';
+import { Provider } from '@/lib/types/provider';
 import Image from 'next/image';
 
 const MAPBOX_TOKEN = "pk.eyJ1Ijoia2FsbWFudG9taWthIiwiYSI6ImNtMzNiY3pvdDEwZDIya3I2NWwxanJ6cXIifQ.kiSWtgrH6X-l0TpquCKiXA";
@@ -14,7 +14,7 @@ interface Coordinates {
 interface ProviderViewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  provider: IProvider | null;
+  provider: Provider | null;
 }
 
 const fetchCoordinates = async (address: {
@@ -247,7 +247,7 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                         {provider.media.images.map((image, index) => (
                           <div key={index} className="relative aspect-square">
                             <Image
-                              src={image.url}
+                              src={typeof image === 'string' ? image : image.url}
                               alt={`${provider.name} - ${index + 1}. kép`}
                               fill
                               className="object-cover rounded-lg"
