@@ -7,12 +7,19 @@ export async function middleware(request: NextRequest) {
   const isAdminRoute = request.nextUrl.pathname.startsWith('/admin');
   const isAuthRoute = request.nextUrl.pathname.startsWith('/admin/auth');
 
-  console.log('Middleware:', {
+  console.log('Middleware Debug:', {
     path: request.nextUrl.pathname,
     hasToken: !!token,
-    tokenRole: token?.role,
+    tokenData: token ? {
+      role: token.role,
+      email: token.email,
+      id: token.id,
+      exp: token.exp,
+      iat: token.iat
+    } : null,
     isAdminRoute,
     isAuthRoute,
+    headers: Object.fromEntries(request.headers.entries())
   });
 
   // Allow access to auth routes
@@ -26,17 +33,17 @@ export async function middleware(request: NextRequest) {
 
   if (isAdminRoute) {
     if (!token) {
-      console.log('No token, redirecting to login');
+      console.log('No token found, redirecting to login');
       return NextResponse.redirect(new URL('/admin/auth/login', request.url));
     }
 
     // Check if user is admin
     if (token.role !== 'admin') {
-      console.log('Not admin, redirecting to home');
+      console.log('Token found but role is not admin:', token.role);
       return NextResponse.redirect(new URL('/', request.url));
     }
 
-    console.log('Admin access granted');
+    console.log('Admin access granted for:', token.email);
   }
 
   return NextResponse.next();

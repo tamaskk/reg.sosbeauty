@@ -69,6 +69,7 @@ export default NextAuth({
   ],
   callbacks: {
     async jwt({ token, user }) {
+      console.log('JWT Callback:', { token, user });
       if (user) {
         token.id = user.id;
         token.role = user.role;
@@ -76,11 +77,24 @@ export default NextAuth({
       return token;
     },
     async session({ session, token }) {
+      console.log('Session Callback:', { session, token });
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
       }
       return session;
+    }
+  },
+  cookies: {
+    sessionToken: {
+      name: `next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: process.env.NODE_ENV === 'production',
+        domain: process.env.NODE_ENV === 'production' ? '.regsosbeauty.vercel.app' : undefined
+      }
     }
   },
   pages: {
