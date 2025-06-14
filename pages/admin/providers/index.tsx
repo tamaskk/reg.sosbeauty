@@ -2,10 +2,58 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import ProviderViewModal from '@/components/ProviderViewModal';
-import { IProvider } from '@/lib/mongodb/models/Provider';
+import { Provider } from '@/lib/types/provider';
 
-type ProviderData = Omit<IProvider, keyof Document> & {
+type ProviderData = Provider & {
   _id: string;
+  address: {
+    street: string;
+    city: string;
+    state: string;
+    zipCode?: string;
+  };
+  media: {
+    images: Array<{
+      url: string;
+      name: string;
+      isMain: boolean;
+    }>;
+    videos: Array<{
+      url: string;
+      isMain: boolean;
+    }>;
+  };
+};
+
+const defaultProvider: ProviderData = {
+  _id: '',
+  name: '',
+  category: '',
+  phoneNumber: '',
+  houseNumber: '',
+  email: '',
+  minPrice: 0,
+  maxPrice: 0,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  instagram: '',
+  facebook: '',
+  tiktok: '',
+  success: false,
+  street: '',
+  postalCode: '',
+  city: '',
+  country: '',
+  address: {
+    street: '',
+    city: '',
+    state: '',
+    zipCode: ''
+  },
+  media: {
+    images: [],
+    videos: []
+  }
 };
 
 export default function ProvidersList() {
@@ -13,7 +61,7 @@ export default function ProvidersList() {
   const [providers, setProviders] = useState<ProviderData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [selectedProvider, setSelectedProvider] = useState<ProviderData | null>(null);
+  const [selectedProvider, setSelectedProvider] = useState<ProviderData>(defaultProvider);
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
 
   useEffect(() => {
@@ -68,7 +116,7 @@ export default function ProvidersList() {
                       <div className="flex items-center">
                         {provider.media.images[0] && (
                           <img
-                            src={provider.media.images[0].url}
+                            src={typeof provider.media.images[0] === 'string' ? provider.media.images[0] : provider.media.images[0].url}
                             alt={provider.name}
                             className="h-12 w-12 rounded-full object-cover mr-4"
                           />
