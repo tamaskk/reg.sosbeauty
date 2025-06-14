@@ -126,13 +126,6 @@ export default function RegistrationForm() {
     };
   }, [videos]);
 
-  const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
-    if (mainPicture === images[index]) {
-      setMainPicture(null);
-    }
-  };
-
   const setMainPictureHandler = (file: File) => {
     setMainPicture(file);
   };
