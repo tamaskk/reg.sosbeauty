@@ -79,11 +79,11 @@ export default function ViewProvider() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
             <ProviderInfoBox label="Business Name" value={provider.name} />
             <ProviderInfoBox label="Category" value={provider.category} />
-            <ProviderInfoBox label="Email" value={provider.email} type="contact" />
-            <ProviderInfoBox label="Phone" value={provider.phoneNumber} type="contact" />
-            <ProviderInfoBox label="Address" value={fullAddress} type="address" />
+            <ProviderInfoBox label="Email" value={provider.email} />
+            <ProviderInfoBox label="Phone" value={provider.phoneNumber} />
+            <ProviderInfoBox label="Address" value={fullAddress} />
             <ProviderInfoBox label="Price Range" value={`${provider.minPrice} - ${provider.maxPrice}`} />
-            <ProviderInfoBox label="Social Media" value={socialMedia} type="list" />
+            <ProviderInfoBox label="Social Media" value={socialMedia} />
             <ProviderInfoBox label="Status" value={provider.success ? 'Active' : 'Inactive'} />
             <ProviderInfoBox label="Created At" value={new Date(provider.createdAt).toLocaleString()} />
             <ProviderInfoBox label="Last Updated" value={new Date(provider.updatedAt).toLocaleString()} />
