@@ -4,7 +4,6 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { Tab } from '@headlessui/react';
 import { EyeIcon, CheckIcon, TrashIcon } from '@heroicons/react/24/outline';
-import JSZip from 'jszip';
 import ProviderViewModal from '@/components/ProviderViewModal';
 import { IProvider } from '@/lib/types/provider';
 
@@ -140,43 +139,43 @@ export default function AdminDashboard() {
     setSelectedProvider(provider);
   };
 
-  const handleDeleteProvider = async (providerId: string) => {
-    try {
-      const response = await fetch(`/api/providers/${providerId}`, {
-        method: 'DELETE',
-      });
-      if (!response.ok) throw new Error('Failed to delete provider');
-      setProviders(providers.filter(p => p._id !== providerId));
-    } catch (err: unknown) {
-      console.error('Error deleting provider:', err);
-    }
-  };
+  // const handleDeleteProvider = async (providerId: string) => {
+  //   try {
+  //     const response = await fetch(`/api/providers/${providerId}`, {
+  //       method: 'DELETE',
+  //     });
+  //     if (!response.ok) throw new Error('Failed to delete provider');
+  //     setProviders(providers.filter(p => p._id !== providerId));
+  //   } catch (err: unknown) {
+  //     console.error('Error deleting provider:', err);
+  //   }
+  // };
 
-  const handleDeleteMedia = async (providerId: string, mediaUrl: string) => {
-    try {
-      const response = await fetch(`/api/providers/${providerId}/media`, {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ mediaUrl }),
-      });
-      if (!response.ok) throw new Error('Failed to delete media');
-      // Update the provider's media list
-      setProviders(providers.map(p => {
-        if (p._id === providerId) {
-          return {
-            ...p,
-            media: {
-              ...p.media,
-              images: p.media.images.filter(img => img.url !== mediaUrl)
-            }
-          };
-        }
-        return p;
-      }));
-    } catch (err: unknown) {
-      console.error('Error deleting media:', err);
-    }
-  };
+  // const handleDeleteMedia = async (providerId: string, mediaUrl: string) => {
+  //   try {
+  //     const response = await fetch(`/api/providers/${providerId}/media`, {
+  //       method: 'DELETE',
+  //       headers: { 'Content-Type': 'application/json' },
+  //       body: JSON.stringify({ mediaUrl }),
+  //     });
+  //     if (!response.ok) throw new Error('Failed to delete media');
+  //     // Update the provider's media list
+  //     setProviders(providers.map(p => {
+  //       if (p._id === providerId) {
+  //         return {
+  //           ...p,
+  //           media: {
+  //             ...p.media,
+  //             images: p.media.images.filter(img => img.url !== mediaUrl)
+  //           }
+  //         };
+  //       }
+  //       return p;
+  //     }));
+  //   } catch (err: unknown) {
+  //     console.error('Error deleting media:', err);
+  //   }
+  // };
 
   if (status === 'loading' || isLoading) {
     return (
@@ -256,7 +255,7 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {providers.map((provider) => (
                     <div
-                      key={provider._id}
+                      key={provider.media.images[0].url}
                       className="bg-white overflow-hidden shadow rounded-lg flex flex-col"
                     >
                       <div className="relative h-48 w-full">

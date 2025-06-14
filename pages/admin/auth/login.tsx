@@ -1,20 +1,10 @@
 import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
-import Head from 'next/head';
-import Link from 'next/link';
-import { useSession } from 'next-auth/react';
-import { useForm } from 'react-hook-form';
-
-interface LoginFormValues {
-  email: string;
-  password: string;
-}
+import Head from 'next/head'; 
 
 export default function Login() {
-  const { data: session } = useSession();
   const router = useRouter();
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
