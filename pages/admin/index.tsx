@@ -286,7 +286,7 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                   {providers.map((provider) => (
                     <div
-                      key={provider.media.images[0].url}
+                      key={provider._id}
                       className="bg-white overflow-hidden shadow rounded-lg flex flex-col"
                     >
                       <div className="relative h-48 w-full">

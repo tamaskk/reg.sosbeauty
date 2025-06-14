@@ -4,6 +4,10 @@ import { connectDB } from '../../../lib/mongodb/mongodb';
 import { User as MongoUser } from '../../../lib/mongodb/models/User';
 import bcrypt from 'bcryptjs';
 
+if (!process.env.NEXTAUTH_SECRET) {
+  throw new Error('Please provide NEXTAUTH_SECRET environment variable');
+}
+
 // Extend the built-in session types
 declare module 'next-auth' {
   interface User {
@@ -64,19 +68,15 @@ export default NextAuth({
     })
   ],
   callbacks: {
-    async jwt({ token, user, account }) {
-      // Initial sign in
-      if (account && user) {
-        return {
-          ...token,
-          id: user.id,
-          role: user.role,
-        };
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+        token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
-      if (token && session.user) {
+      if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
       }
@@ -92,5 +92,5 @@ export default NextAuth({
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: true, // Enable debug messages in development
+  debug: process.env.NODE_ENV === 'development',
 }); 
