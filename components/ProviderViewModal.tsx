@@ -1,7 +1,7 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState, useEffect } from 'react';
 import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
-import { Provider } from '@/lib/types/provider';
+import { IProvider } from '@/lib/mongodb/models/Provider';
 import Image from 'next/image';
 
 const MAPBOX_TOKEN = "pk.eyJ1Ijoia2FsbWFudG9taWthIiwiYSI6ImNtMzNiY3pvdDEwZDIya3I2NWwxanJ6cXIifQ.kiSWtgrH6X-l0TpquCKiXA";
@@ -14,7 +14,7 @@ interface Coordinates {
 interface ProviderViewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  provider: Provider | null;
+  provider: (Omit<IProvider, keyof Document> & { _id: string }) | null;
 }
 
 const fetchCoordinates = async (address: {
