@@ -3,15 +3,24 @@ import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import { useForm } from 'react-hook-form';
+
+interface LoginFormValues {
+  email: string;
+  password: string;
+}
 
 export default function Login() {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const { register, handleSubmit, formState: { errors } } = useForm<LoginFormValues>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const router = useRouter();
   const { callbackUrl } = router.query;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -43,14 +52,14 @@ export default function Login() {
             <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
               Sign in to your account
             </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
+            {/* <p className="mt-2 text-center text-sm text-gray-600">
               Or{' '}
               <Link href="/admin/auth/register" className="font-medium text-indigo-600 hover:text-indigo-500">
                 create a new account
               </Link>
-            </p>
+            </p> */}
           </div>
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <form className="mt-8 space-y-6" onSubmit={handleSubmitForm}>
             <div className="rounded-md shadow-sm -space-y-px">
               <div>
                 <label htmlFor="email-address" className="sr-only">

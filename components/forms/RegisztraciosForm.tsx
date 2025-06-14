@@ -1,9 +1,10 @@
-import { useForm, SubmitHandler } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { yupResolver } from '@hookform/resolvers/yup';
 import * as yup from 'yup';
 import { useDropzone } from 'react-dropzone';
 import { useState, useEffect } from 'react';
 import { uploadMultipleFiles, validateFileSize, validateFileType } from '../../lib/firebase/upload';
+import Image from 'next/image';
 
 const categories = [
   'Pillás',
@@ -430,20 +431,14 @@ export default function RegistrationForm() {
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {images.map((file, index) => (
                 <div key={index} className="relative">
-                  <div className="aspect-square relative bg-gray-100 rounded-lg overflow-hidden">
-                    <img
+                  <div className="relative w-full h-48">
+                    <Image
                       src={previewUrls[index]}
                       alt={`Preview ${index + 1}`}
-                      className="w-full h-full object-contain"
+                      fill
+                      className="object-contain"
+                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                     />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors"
-                      title="Kép törlése"
-                    >
-                      ×
-                    </button>
                   </div>
                   <div className="mt-2 flex items-center gap-2">
                     <input

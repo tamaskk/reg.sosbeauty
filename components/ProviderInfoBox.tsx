@@ -1,13 +1,11 @@
 import { useState } from 'react';
 
-interface InfoBoxProps {
+interface ProviderInfoBoxProps {
   label: string;
-  value: string | string[] | null | undefined;
-  type?: 'text' | 'list' | 'address' | 'contact';
-  onCopy?: (value: string) => void;
+  value: string | string[];
 }
 
-export default function ProviderInfoBox({ label, value, type = 'text', onCopy }: InfoBoxProps) {
+export default function ProviderInfoBox({ label, value }: ProviderInfoBoxProps) {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -25,9 +23,6 @@ export default function ProviderInfoBox({ label, value, type = 'text', onCopy }:
       await navigator.clipboard.writeText(textToCopy);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-      if (onCopy) {
-        onCopy(textToCopy);
-      }
     } catch (err) {
       console.error('Failed to copy:', err);
     }
@@ -48,8 +43,8 @@ export default function ProviderInfoBox({ label, value, type = 'text', onCopy }:
   return (
     <div 
       className={`relative p-4 rounded-lg border ${
-        onCopy ? 'cursor-pointer hover:bg-gray-50' : ''
-      } ${copied ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'}`}
+        copied ? 'bg-green-50 border-green-200' : 'bg-white border-gray-200'
+      }`}
       onClick={handleCopy}
       title="Kattintson a másoláshoz"
     >

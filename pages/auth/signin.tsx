@@ -2,14 +2,18 @@ import { useState } from 'react';
 import { signIn } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import { useSession } from 'next-auth/react';
+import { useForm } from 'react-hook-form';
 
 export default function SignIn() {
+  const { data: session } = useSession();
+  const router = useRouter();
+  const { register, handleSubmit, formState: { errors } } = useForm<SignInFormValues>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmitForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
@@ -43,7 +47,7 @@ export default function SignIn() {
               Sign in to your account
             </h2>
           </div>
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+          <form className="mt-8 space-y-6" onSubmit={handleSubmitForm}>
             <div className="rounded-md shadow-sm -space-y-px">
               <div>
                 <label htmlFor="email-address" className="sr-only">

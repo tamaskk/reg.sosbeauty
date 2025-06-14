@@ -1,6 +1,8 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { connectDB } from '../../../../lib/mongodb/mongodb';
 import Provider, { IProvider } from '../../../../lib/mongodb/models/Provider';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../../auth/[...nextauth]';
 
 interface ProviderImage {
   url: string;

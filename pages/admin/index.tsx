@@ -6,7 +6,16 @@ import { Tab } from '@headlessui/react';
 import { EyeIcon, CheckIcon, TrashIcon } from '@heroicons/react/24/outline';
 import JSZip from 'jszip';
 import ProviderViewModal from '@/components/ProviderViewModal';
-import { Provider, MediaItem } from '@/lib/types/provider';
+import { IProvider } from '@/lib/types/provider';
+
+interface ProviderWithMedia extends IProvider {
+  media: {
+    images: Array<{
+      url: string;
+      name: string;
+    }>;
+  };
+}
 
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(' ');
@@ -15,8 +24,8 @@ function classNames(...classes: string[]) {
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [providers, setProviders] = useState<Provider[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+  const [providers, setProviders] = useState<ProviderWithMedia[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<ProviderWithMedia | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -67,6 +76,7 @@ export default function AdminDashboard() {
           media: {
             images: (media.images || []).map((img: any) => ({
               url: typeof img === 'string' ? img : (img?.url || ''),
+              name: typeof img === 'string' ? '' : (img?.name || ''),
               isMain: typeof img === 'string' ? false : (img?.isMain || false)
             })),
             videos: (media.videos || []).map((vid: any) => ({
@@ -126,37 +136,46 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleView = (provider: Provider) => {
+  const handleView = (provider: ProviderWithMedia) => {
     setSelectedProvider(provider);
   };
 
-  const handleDownloadMedia = async (provider: Provider) => {
-    const zip = new JSZip();
-    
-    // Add images
-    for (const [index, image] of provider.media.images.entries()) {
-      const imageUrl = typeof image === 'string' ? image : (image as { url: string }).url;
-      const response = await fetch(imageUrl);
-      const blob = await response.blob();
-      zip.file(`image_${index + 1}.jpg`, blob);
+  const handleDeleteProvider = async (providerId: string) => {
+    try {
+      const response = await fetch(`/api/providers/${providerId}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) throw new Error('Failed to delete provider');
+      setProviders(providers.filter(p => p._id !== providerId));
+    } catch (err: unknown) {
+      console.error('Error deleting provider:', err);
     }
-    
-    // Add videos
-    for (const [index, video] of provider.media.videos.entries()) {
-      const videoUrl = typeof video === 'string' ? video : (video as { url: string }).url;
-      const response = await fetch(videoUrl);
-      const blob = await response.blob();
-      zip.file(`video_${index + 1}.mp4`, blob);
+  };
+
+  const handleDeleteMedia = async (providerId: string, mediaUrl: string) => {
+    try {
+      const response = await fetch(`/api/providers/${providerId}/media`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mediaUrl }),
+      });
+      if (!response.ok) throw new Error('Failed to delete media');
+      // Update the provider's media list
+      setProviders(providers.map(p => {
+        if (p._id === providerId) {
+          return {
+            ...p,
+            media: {
+              ...p.media,
+              images: p.media.images.filter(img => img.url !== mediaUrl)
+            }
+          };
+        }
+        return p;
+      }));
+    } catch (err: unknown) {
+      console.error('Error deleting media:', err);
     }
-    
-    // Generate and download zip
-    const content = await zip.generateAsync({ type: 'blob' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(content);
-    link.download = `${provider.name}_media.zip`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   if (status === 'loading' || isLoading) {

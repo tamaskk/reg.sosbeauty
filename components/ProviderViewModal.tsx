@@ -1,7 +1,8 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState, useEffect } from 'react';
 import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
-import { Provider, MediaItem } from '@/lib/types/provider';
+import { IProvider } from '@/lib/types/provider';
+import Image from 'next/image';
 
 const MAPBOX_TOKEN = "pk.eyJ1Ijoia2FsbWFudG9taWthIiwiYSI6ImNtMzNiY3pvdDEwZDIya3I2NWwxanJ6cXIifQ.kiSWtgrH6X-l0TpquCKiXA";
 
@@ -13,7 +14,7 @@ interface Coordinates {
 interface ProviderViewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  provider: Provider | null;
+  provider: IProvider | null;
 }
 
 const fetchCoordinates = async (address: {
@@ -245,16 +246,13 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {provider.media.images.map((image, index) => (
                           <div key={index} className="relative aspect-square">
-                            <img
-                              src={typeof image === 'string' ? image : image.url}
-                              alt={`${provider.name} - Kép ${index + 1}`}
-                              className="w-full h-full object-cover rounded-lg"
+                            <Image
+                              src={image.url}
+                              alt={`${provider.name} - ${index + 1}. kép`}
+                              fill
+                              className="object-cover rounded-lg"
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                             />
-                            {typeof image !== 'string' && image.isMain && (
-                              <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
-                                Fő
-                              </span>
-                            )}
                           </div>
                         ))}
                       </div>

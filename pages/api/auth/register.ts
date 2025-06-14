@@ -4,12 +4,13 @@ import { User } from '../../../lib/mongodb/models/User';
 import { hash } from 'bcryptjs';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+  return false;
   if (req.method !== 'POST') {
     return res.status(405).json({ message: 'Method not allowed' });
   }
 
   try {
-    const { name, email, password } = req.body;
+    const { email, password, name } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ message: 'Missing required fields' });
