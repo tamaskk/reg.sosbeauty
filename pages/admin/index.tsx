@@ -7,6 +7,21 @@ import { EyeIcon, CheckIcon, TrashIcon } from '@heroicons/react/24/outline';
 import ProviderViewModal from '@/components/ProviderViewModal';
 import { Provider } from '@/lib/types/provider';
 
+interface RawProvider {
+  _id: string;
+  name: string;
+  category: string;
+  street?: string;
+  city?: string;
+  country?: string;
+  postalCode?: string;
+  media?: {
+    images?: Array<string | { url: string; name?: string; isMain?: boolean }>;
+    videos?: Array<string | { url: string; isMain?: boolean }>;
+  };
+  [key: string]: any;
+}
+
 interface ProviderWithMedia extends Provider {
   media: {
     images: Array<{
@@ -60,8 +75,7 @@ export default function AdminDashboard() {
         throw new Error('Invalid providers data structure');
       }
 
-      // @ts-ignore
-      const transformedProviders = providersArray.map((provider: any) => {
+      const transformedProviders = providersArray.map((provider: RawProvider): ProviderWithMedia | null => {
         if (!provider) {
           console.error('Invalid provider object:', provider);
           return null;
@@ -70,7 +84,6 @@ export default function AdminDashboard() {
         // Ensure media object exists
         const media = provider.media || { images: [], videos: [] };
         
-        // @ts-ignore
         return {
           ...provider,
           address: {
@@ -80,20 +93,18 @@ export default function AdminDashboard() {
             zipCode: provider.postalCode || ''
           },
           media: {
-            // @ts-ignore
-            images: (media.images || []).map((img: any) => ({
+            images: (media.images || []).map((img) => ({
               url: typeof img === 'string' ? img : (img?.url || ''),
               name: typeof img === 'string' ? '' : (img?.name || ''),
               isMain: typeof img === 'string' ? false : (img?.isMain || false)
             })),
-            // @ts-ignore
-            videos: (media.videos || []).map((vid: any) => ({
+            videos: (media.videos || []).map((vid) => ({
               url: typeof vid === 'string' ? vid : (vid?.url || ''),
               isMain: typeof vid === 'string' ? false : (vid?.isMain || false)
             }))
           }
-        };
-      }).filter(Boolean); // Remove any null entries
+        } as ProviderWithMedia;
+      }).filter((provider): provider is ProviderWithMedia => provider !== null);
 
       setProviders(transformedProviders);
     } catch (err) {
