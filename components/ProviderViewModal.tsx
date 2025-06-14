@@ -1,0 +1,293 @@
+import { Dialog, Transition } from '@headlessui/react';
+import { Fragment, useState, useEffect } from 'react';
+import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { Provider, MediaItem } from '@/lib/types/provider';
+
+const MAPBOX_TOKEN = "pk.eyJ1Ijoia2FsbWFudG9taWthIiwiYSI6ImNtMzNiY3pvdDEwZDIya3I2NWwxanJ6cXIifQ.kiSWtgrH6X-l0TpquCKiXA";
+
+interface Coordinates {
+  lng: number;
+  lat: number;
+}
+
+interface ProviderViewModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  provider: Provider | null;
+}
+
+const fetchCoordinates = async (address: {
+  street: string;
+  houseNumber: string;
+  city: string;
+  postalCode: string;
+  country: string;
+}): Promise<Coordinates | null> => {
+  try {
+    const query = `${address.street} ${address.houseNumber}, ${address.postalCode} ${address.city}, ${address.country}`;
+    const encodedQuery = encodeURIComponent(query);
+    const response = await fetch(
+      `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodedQuery}.json?access_token=${MAPBOX_TOKEN}`
+    );
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch coordinates');
+    }
+
+    const data = await response.json();
+    if (data.features && data.features.length > 0) {
+      const [lng, lat] = data.features[0].center;
+      return { lng, lat };
+    }
+    return null;
+  } catch (error) {
+    console.error('Error fetching coordinates:', error);
+    return null;
+  }
+};
+
+const CopyableBox = ({ label, value, children }: { label: string; value?: string; children?: React.ReactNode }) => {
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    if (value) {
+      await navigator.clipboard.writeText(value);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
+  return (
+    <div className="relative group">
+      <div
+        onClick={handleCopy}
+        className="p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 cursor-pointer transition-colors"
+      >
+        <div className="text-sm font-medium text-gray-900 mb-1">{label}</div>
+        {children || <div className="text-gray-600">{value}</div>}
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+          {copied ? (
+            <CheckIcon className="h-5 w-5 text-green-500" />
+          ) : (
+            <svg className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+            </svg>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default function ProviderViewModal({ isOpen, onClose, provider }: ProviderViewModalProps) {
+  const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
+  const [isLoadingCoordinates, setIsLoadingCoordinates] = useState(false);
+
+  useEffect(() => {
+    const getCoordinates = async () => {
+      if (provider) {
+        setIsLoadingCoordinates(true);
+        const coords = await fetchCoordinates({
+          street: provider.street,
+          houseNumber: provider.houseNumber,
+          city: provider.city,
+          postalCode: provider.postalCode,
+          country: provider.country
+        });
+        setCoordinates(coords);
+        setIsLoadingCoordinates(false);
+      }
+    };
+
+    if (isOpen && provider) {
+      getCoordinates();
+    }
+  }, [isOpen, provider]);
+
+  if (!provider) return null;
+
+  return (
+    <Transition appear show={isOpen} as={Fragment}>
+      <Dialog as="div" className="relative z-10" onClose={onClose}>
+        <Transition.Child
+          as={Fragment}
+          enter="ease-out duration-300"
+          enterFrom="opacity-0"
+          enterTo="opacity-100"
+          leave="ease-in duration-200"
+          leaveFrom="opacity-100"
+          leaveTo="opacity-0"
+        >
+          <div className="fixed inset-0 bg-black bg-opacity-25" />
+        </Transition.Child>
+
+        <div className="fixed inset-0 overflow-y-auto">
+          <div className="flex min-h-full items-center justify-center p-4 text-center">
+            <Transition.Child
+              as={Fragment}
+              enter="ease-out duration-300"
+              enterFrom="opacity-0 scale-95"
+              enterTo="opacity-100 scale-100"
+              leave="ease-in duration-200"
+              leaveFrom="opacity-100 scale-100"
+              leaveTo="opacity-0 scale-95"
+            >
+              <Dialog.Panel className="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Title
+                  as="div"
+                  className="flex items-center justify-between mb-6"
+                >
+                  <h3 className="text-xl font-medium leading-6 text-gray-900">
+                    {provider.name}
+                  </h3>
+                  <button
+                    type="button"
+                    className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none"
+                    onClick={onClose}
+                  >
+                    <XMarkIcon className="h-6 w-6" />
+                  </button>
+                </Dialog.Title>
+
+                <div className="mt-2 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <CopyableBox label="Kategória" value={provider.category} />
+                    <CopyableBox label="Email" value={provider.email} />
+                    <CopyableBox label="Telefonszám" value={provider.phoneNumber} />
+                    <CopyableBox label="Minimum ár" value={`${provider.minPrice} Ft`} />
+                    <CopyableBox label="Maximum ár" value={`${provider.maxPrice} Ft`} />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <CopyableBox label="Cím" value={`${provider.street} ${provider.houseNumber}`} />
+                    <CopyableBox label="Irányítószám" value={provider.postalCode} />
+                    <CopyableBox label="Város" value={provider.city} />
+                    <CopyableBox label="Ország" value={provider.country} />
+                    {isLoadingCoordinates ? (
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="text-sm font-medium text-gray-900 mb-1">Koordináták</div>
+                        <div className="text-gray-600">Betöltés...</div>
+                      </div>
+                    ) : coordinates ? (
+                      <>
+                        <CopyableBox 
+                          label="Hosszúság" 
+                          value={coordinates.lng.toFixed(6)} 
+                        />
+                        <CopyableBox 
+                          label="Szélesség" 
+                          value={coordinates.lat.toFixed(6)} 
+                        />
+                      </>
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                        <div className="text-sm font-medium text-gray-900 mb-1">Koordináták</div>
+                        <div className="text-gray-600">Nem található</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {(provider.instagram || provider.facebook || provider.tiktok) && (
+                    <div className="space-y-2">
+                      {provider.instagram && (
+                        <CopyableBox label="Instagram" value={provider.instagram}>
+                          <a
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            href={provider.instagram.startsWith('http') ? provider.instagram : `https://instagram.com/${provider.instagram}`}
+                            className="text-indigo-600 hover:text-indigo-500"
+                          >
+                            {provider.instagram}
+                          </a>
+                        </CopyableBox>
+                      )}
+                      {provider.facebook && (
+                        <CopyableBox label="Facebook" value={provider.facebook}>
+                          <a
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            href={provider.facebook.startsWith('http') ? provider.facebook : `https://facebook.com/${provider.facebook}`}
+                            className="text-indigo-600 hover:text-indigo-500"
+                          >
+                            {provider.facebook}
+                          </a>
+                        </CopyableBox>
+                      )}
+                      {provider.tiktok && (
+                        <CopyableBox label="TikTok" value={provider.tiktok}>
+                          <a
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            href={provider.tiktok.startsWith('http') ? provider.tiktok : `https://tiktok.com/@${provider.tiktok}`}
+                            className="text-indigo-600 hover:text-indigo-500"
+                          >
+                            {provider.tiktok}
+                          </a>
+                        </CopyableBox>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <CopyableBox 
+                      label="Létrehozva" 
+                      value={new Date(provider.createdAt).toLocaleString('hu-HU')} 
+                    />
+                    <CopyableBox 
+                      label="Módosítva" 
+                      value={new Date(provider.updatedAt).toLocaleString('hu-HU')} 
+                    />
+                  </div>
+
+                  {provider.media.images.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">Képek</h4>
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {provider.media.images.map((image, index) => (
+                          <div key={index} className="relative aspect-square">
+                            <img
+                              src={typeof image === 'string' ? image : image.url}
+                              alt={`${provider.name} - Kép ${index + 1}`}
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                            {typeof image !== 'string' && image.isMain && (
+                              <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                                Fő
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {provider.media.videos.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">Videók</h4>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {provider.media.videos.map((video, index) => (
+                          <div key={index} className="relative aspect-video">
+                            <video
+                              src={typeof video === 'string' ? video : video.url}
+                              controls
+                              className="w-full h-full object-cover rounded-lg"
+                            />
+                            {typeof video !== 'string' && video.isMain && (
+                              <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
+                                Fő
+                              </span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </Dialog.Panel>
+            </Transition.Child>
+          </div>
+        </div>
+      </Dialog>
+    </Transition>
+  );
+} 
