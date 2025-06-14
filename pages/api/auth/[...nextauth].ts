@@ -1,11 +1,15 @@
-import NextAuth, { DefaultSession } from 'next-auth';
+import NextAuth, { DefaultSession, User as NextAuthUser } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { connectDB } from '../../../lib/mongodb/mongodb';
-import { User } from '../../../lib/mongodb/models/User';
+import { User as MongoUser } from '../../../lib/mongodb/models/User';
 import bcrypt from 'bcryptjs';
 
 // Extend the built-in session types
 declare module 'next-auth' {
+  interface User {
+    role?: string;
+  }
+  
   interface Session extends DefaultSession {
     user: {
       id: string;
@@ -36,7 +40,7 @@ export default NextAuth({
 
         await connectDB();
 
-        const user = await User.findOne({ email: credentials.email });
+        const user = await MongoUser.findOne({ email: credentials.email });
         if (!user) {
           throw new Error('No user found with this email');
         }
