@@ -37,6 +37,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Remove password from response
     const { password: _password, ...userWithoutPassword } = user.toObject();
 
+    console.log(password);
+
     res.status(201).json({
       message: 'User created successfully',
       user: userWithoutPassword,
