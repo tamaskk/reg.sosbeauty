@@ -32,7 +32,7 @@ export interface IProvider extends Document {
 
 const ProviderSchema: Schema = new Schema({
   name: { type: String, required: true },
-  email: { type: String, required: true },
+  email: { type: String, required: true, unique: false },
   category: { 
     type: String, 
     required: true,
