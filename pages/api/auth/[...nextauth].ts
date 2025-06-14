@@ -1,4 +1,4 @@
-import NextAuth, { DefaultSession, User as NextAuthUser } from 'next-auth';
+import NextAuth, { DefaultSession } from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { connectDB } from '../../../lib/mongodb/mongodb';
 import { User as MongoUser } from '../../../lib/mongodb/models/User';
