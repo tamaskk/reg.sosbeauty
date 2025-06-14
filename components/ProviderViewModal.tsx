@@ -1,6 +1,6 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState, useEffect } from 'react';
-import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, CheckIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
 import { Provider } from '@/lib/types/provider';
 import Image from 'next/image';
 
@@ -97,6 +97,8 @@ const CopyableBox = ({ label, value, children }: { label: string; value?: string
 export default function ProviderViewModal({ isOpen, onClose, provider }: ProviderViewModalProps) {
   const [coordinates, setCoordinates] = useState<Coordinates | null>(null);
   const [isLoadingCoordinates, setIsLoadingCoordinates] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
 
   useEffect(() => {
     const getCoordinates = async () => {
@@ -118,6 +120,66 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
       getCoordinates();
     }
   }, [isOpen, provider]);
+
+  const downloadFile = async (url: string, filename: string) => {
+    try {
+      // Use our API endpoint to proxy the download
+      const response = await fetch(`/api/providers/download?url=${encodeURIComponent(url)}`);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to download file: ${response.statusText}`);
+      }
+
+      const blob = await response.blob();
+      const downloadUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error('Error downloading file:', error);
+      throw error;
+    }
+  };
+
+  const downloadAllMedia = async () => {
+    if (!provider) return;
+
+    setIsDownloading(true);
+    setDownloadProgress(0);
+
+    const allMedia = [
+      ...provider.media.images.map((img, index) => ({
+        url: img.url,
+        filename: `${provider.name}_image_${index + 1}.${img.url.split('.').pop()?.split('?')[0] || 'jpg'}`
+      })),
+      ...provider.media.videos.map((vid, index) => ({
+        url: vid.url,
+        filename: `${provider.name}_video_${index + 1}.${vid.url.split('.').pop()?.split('?')[0] || 'mp4'}`
+      }))
+    ];
+
+    const totalFiles = allMedia.length;
+    let completedFiles = 0;
+
+    for (const media of allMedia) {
+      try {
+        await downloadFile(media.url, media.filename);
+        completedFiles++;
+        setDownloadProgress((completedFiles / totalFiles) * 100);
+        // Add a small delay between downloads to prevent browser throttling
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error(`Error downloading ${media.filename}:`, error);
+      }
+    }
+
+    setIsDownloading(false);
+    setDownloadProgress(0);
+  };
 
   if (!provider) return null;
 
@@ -155,29 +217,42 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                   <h3 className="text-xl font-medium leading-6 text-gray-900">
                     {provider.name}
                   </h3>
-                  <button
-                    type="button"
-                    className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none"
-                    onClick={onClose}
-                  >
-                    <XMarkIcon className="h-6 w-6" />
-                  </button>
+                  <div className="flex items-center space-x-2">
+                    {(provider.media.images.length > 0 || provider.media.videos.length > 0) && (
+                      <button
+                        type="button"
+                        onClick={downloadAllMedia}
+                        disabled={isDownloading}
+                        className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
+                        {isDownloading ? `Letöltés... ${Math.round(downloadProgress)}%` : 'Összes fájl letöltése'}
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      className="rounded-md bg-white text-gray-400 hover:text-gray-500 focus:outline-none"
+                      onClick={onClose}
+                    >
+                      <XMarkIcon className="h-6 w-6" />
+                    </button>
+                  </div>
                 </Dialog.Title>
 
                 <div className="mt-2 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <CopyableBox label="Kategória" value={provider.category} />
-                    <CopyableBox label="Email" value={provider.email} />
-                    <CopyableBox label="Telefonszám" value={provider.phoneNumber} />
-                    <CopyableBox label="Minimum ár" value={`${provider.minPrice} Ft`} />
-                    <CopyableBox label="Maximum ár" value={`${provider.maxPrice} Ft`} />
+                    <CopyableBox label="Email (10. variant)" value={provider.email} />
+                    <CopyableBox label="Telefonszám (3. variant)" value={provider.phoneNumber} />
+                    <CopyableBox label="Minimum ár (1. variant)" value={`${provider.minPrice} Ft`} />
+                    <CopyableBox label="Maximum ár (2. variant)" value={`${provider.maxPrice} Ft`} />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <CopyableBox label="Cím" value={`${provider.address.street} ${provider.houseNumber}`} />
-                    <CopyableBox label="Irányítószám" value={provider.address.zipCode || ''} />
-                    <CopyableBox label="Város" value={provider.address.city} />
-                    <CopyableBox label="Ország" value={provider.address.state} />
+                    <CopyableBox label="Cím (6. variant)" value={`${provider.address.street} ${provider.houseNumber}`} />
+                    <CopyableBox label="Irányítószám (6. variant)" value={provider.address.zipCode || ''} />
+                    <CopyableBox label="Város (6. variant)" value={provider.address.city} />
+                    <CopyableBox label="Ország (6. variant)" value={provider.address.state} />
                     {isLoadingCoordinates ? (
                       <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                         <div className="text-sm font-medium text-gray-900 mb-1">Koordináták</div>
@@ -186,11 +261,11 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                     ) : coordinates ? (
                       <>
                         <CopyableBox 
-                          label="Hosszúság" 
+                          label="Hosszúság (5. variant)" 
                           value={coordinates.lng.toFixed(6)} 
                         />
                         <CopyableBox 
-                          label="Szélesség" 
+                          label="Szélesség (4. variant)" 
                           value={coordinates.lat.toFixed(6)} 
                         />
                       </>
@@ -205,7 +280,7 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                   {(provider.instagram || provider.facebook || provider.tiktok) && (
                     <div className="space-y-2">
                       {provider.instagram && (
-                        <CopyableBox label="Instagram" value={provider.instagram}>
+                        <CopyableBox label="Instagram (7. variant)" value={provider.instagram}>
                           <a
                             target="_blank"
                             rel="noopener noreferrer"
@@ -217,7 +292,7 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                         </CopyableBox>
                       )}
                       {provider.facebook && (
-                        <CopyableBox label="Facebook" value={provider.facebook}>
+                        <CopyableBox label="Facebook (8. variant)" value={provider.facebook}>
                           <a
                             target="_blank"
                             rel="noopener noreferrer"
@@ -229,7 +304,7 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                         </CopyableBox>
                       )}
                       {provider.tiktok && (
-                        <CopyableBox label="TikTok" value={provider.tiktok}>
+                        <CopyableBox label="TikTok (9. variant)" value={provider.tiktok}>
                           <a
                             target="_blank"
                             rel="noopener noreferrer"

@@ -245,7 +245,7 @@ export default function RegistrationForm() {
 
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Minimum ár</label>
+            <label className="block text-sm font-medium text-gray-700">Minimum ár (1. variant)</label>
             <input
               type="number"
               {...register('minPrice')}
@@ -256,7 +256,7 @@ export default function RegistrationForm() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">Maximum ár</label>
+            <label className="block text-sm font-medium text-gray-700">Maximum ár (2. variant)</label>
             <input
               type="number"
               {...register('maxPrice')}
@@ -325,7 +325,7 @@ export default function RegistrationForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-gray-700">Telefonszám</label>
+          <label className="block text-sm font-medium text-gray-700">Telefonszám (3. variant (Ha nincs akkor -))</label>
           <input
             type="tel"
             {...register('phoneNumber')}
