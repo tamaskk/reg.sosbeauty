@@ -59,10 +59,11 @@ const schema = yup.object().shape({
   street: yup.string().required('Az utca megadása kötelező'),
   houseNumber: yup.string().required('A házszám megadása kötelező'),
   phoneNumber: yup.string().required('A telefonszám megadása kötelező'),
-  instagram: yup.string().optional(),
-  facebook: yup.string().optional(),
-  tiktok: yup.string().optional(),
-});
+  instagram: yup.string().optional().nullable(),
+  facebook: yup.string().optional().nullable(),
+  tiktok: yup.string().optional().nullable(),
+  mainPicture: yup.string().optional().nullable(),
+}) as yup.ObjectSchema<FormValues>;
 
 export default function RegistrationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
