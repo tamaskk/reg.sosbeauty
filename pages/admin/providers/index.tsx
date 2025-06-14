@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Image from 'next/image';
 import ProviderViewModal from '@/components/ProviderViewModal';
 import { Provider } from '@/lib/types/provider';
 
@@ -115,9 +116,11 @@ export default function ProvidersList() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center">
                         {provider.media.images[0] && (
-                          <img
+                          <Image
                             src={typeof provider.media.images[0] === 'string' ? provider.media.images[0] : provider.media.images[0].url}
                             alt={provider.name}
+                            width={48}
+                            height={48}
                             className="h-12 w-12 rounded-full object-cover mr-4"
                           />
                         )}

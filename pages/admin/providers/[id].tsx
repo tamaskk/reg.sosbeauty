@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import ProviderInfoBox from '@/components/ProviderInfoBox';
@@ -16,13 +16,7 @@ export default function ViewProvider() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    if (id) {
-      fetchProvider();
-    }
-  }, [id]);
-
-  const fetchProvider = async () => {
+  const fetchProvider = useCallback(async () => {
     try {
       const response = await fetch(`/api/providers/${id}`);
       if (!response.ok) throw new Error('Failed to fetch provider');
@@ -33,7 +27,13 @@ export default function ViewProvider() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (id) {
+      fetchProvider();
+    }
+  }, [id, fetchProvider]);
 
   const handleImagesUpdate = (images: { url: string; isMain: boolean }[]) => {
     if (provider) {

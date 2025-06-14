@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
+import Image from 'next/image';
 import { Tab } from '@headlessui/react';
 import { EyeIcon, CheckIcon, TrashIcon } from '@heroicons/react/24/outline';
 import ProviderViewModal from '@/components/ProviderViewModal';
@@ -290,18 +291,14 @@ export default function AdminDashboard() {
                       className="bg-white overflow-hidden shadow rounded-lg flex flex-col"
                     >
                       <div className="relative h-48 w-full">
-                        {provider.media.images[0] ? (
-                          <img
-                            src={typeof provider.media.images[0] === 'string' 
-                              ? provider.media.images[0] 
-                              : provider.media.images[0].url}
+                        {provider.media.images[0] && (
+                          <Image
+                            src={typeof provider.media.images[0] === 'string' ? provider.media.images[0] : provider.media.images[0].url}
                             alt={provider.name}
-                            className="w-full h-full object-cover"
+                            width={48}
+                            height={48}
+                            className="rounded-full object-cover mr-4"
                           />
-                        ) : (
-                          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                            <span className="text-gray-400">Nincs kép</span>
-                          </div>
                         )}
                       </div>
                       <div className="p-4 flex-grow flex flex-col">
