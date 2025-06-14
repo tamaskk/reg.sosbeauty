@@ -1,7 +1,7 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState, useEffect } from 'react';
 import { XMarkIcon, CheckIcon } from '@heroicons/react/24/outline';
-import { IProvider } from '@/lib/mongodb/models/Provider';
+import { Provider } from '@/lib/types/provider';
 import Image from 'next/image';
 
 const MAPBOX_TOKEN = "pk.eyJ1Ijoia2FsbWFudG9taWthIiwiYSI6ImNtMzNiY3pvdDEwZDIya3I2NWwxanJ6cXIifQ.kiSWtgrH6X-l0TpquCKiXA";
@@ -11,10 +11,24 @@ interface Coordinates {
   lat: number;
 }
 
+interface ProviderWithMedia extends Provider {
+  media: {
+    images: Array<{
+      url: string;
+      name: string;
+      isMain: boolean;
+    }>;
+    videos: Array<{
+      url: string;
+      isMain: boolean;
+    }>;
+  };
+}
+
 interface ProviderViewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  provider: (Omit<IProvider, keyof Document> & { _id: string }) | null;
+  provider: ProviderWithMedia | null;
 }
 
 const fetchCoordinates = async (address: {
@@ -89,11 +103,11 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
       if (provider) {
         setIsLoadingCoordinates(true);
         const coords = await fetchCoordinates({
-          street: provider.street,
+          street: provider.address.street,
           houseNumber: provider.houseNumber,
-          city: provider.city,
-          postalCode: provider.postalCode,
-          country: provider.country
+          city: provider.address.city,
+          postalCode: provider.address.zipCode || '',
+          country: provider.address.state
         });
         setCoordinates(coords);
         setIsLoadingCoordinates(false);
@@ -160,10 +174,10 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <CopyableBox label="Cím" value={`${provider.street} ${provider.houseNumber}`} />
-                    <CopyableBox label="Irányítószám" value={provider.postalCode} />
-                    <CopyableBox label="Város" value={provider.city} />
-                    <CopyableBox label="Ország" value={provider.country} />
+                    <CopyableBox label="Cím" value={`${provider.address.street} ${provider.houseNumber}`} />
+                    <CopyableBox label="Irányítószám" value={provider.address.zipCode || ''} />
+                    <CopyableBox label="Város" value={provider.address.city} />
+                    <CopyableBox label="Ország" value={provider.address.state} />
                     {isLoadingCoordinates ? (
                       <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                         <div className="text-sm font-medium text-gray-900 mb-1">Koordináták</div>
@@ -247,7 +261,7 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                         {provider.media.images.map((image, index) => (
                           <div key={index} className="relative aspect-square">
                             <Image
-                              src={typeof image === 'string' ? image : image.url}
+                              src={image.url}
                               alt={`${provider.name} - ${index + 1}. kép`}
                               fill
                               className="object-cover rounded-lg"
@@ -266,11 +280,11 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                         {provider.media.videos.map((video, index) => (
                           <div key={index} className="relative aspect-video">
                             <video
-                              src={typeof video === 'string' ? video : video.url}
+                              src={video.url}
                               controls
                               className="w-full h-full object-cover rounded-lg"
                             />
-                            {typeof video !== 'string' && video.isMain && (
+                            {video.isMain && (
                               <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs px-2 py-1 rounded">
                                 Fő
                               </span>
