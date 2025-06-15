@@ -208,7 +208,7 @@ export default function RegistrationForm() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
-          <label className="block text-sm font-medium text-gray-700">Név</label>
+          <label className="block text-sm font-medium text-gray-700">Üzleted neve / Saját neved</label>
           <input
             type="text"
             {...register('name')}
