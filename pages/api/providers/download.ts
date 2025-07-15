@@ -18,6 +18,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error(`Failed to fetch file: ${response.statusText}`);
     }
 
+    // Get current date/time
+    const currentDate = new Date().toUTCString();
+
     // Forward the content type
     res.setHeader('Content-Type', response.headers.get('content-type') || 'application/octet-stream');
     
@@ -26,6 +29,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (contentDisposition) {
       res.setHeader('Content-Disposition', contentDisposition);
     }
+
+    // Set current date as the last modified date and date header
+    // This will make the file appear with today's date in the iPhone gallery
+    res.setHeader('Last-Modified', currentDate);
+    res.setHeader('Date', currentDate);
 
     // Stream the response
     const buffer = await response.arrayBuffer();
