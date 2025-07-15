@@ -1,6 +1,6 @@
 import { Dialog, Transition } from '@headlessui/react';
 import { Fragment, useState, useEffect } from 'react';
-import { XMarkIcon, CheckIcon, ArrowDownTrayIcon } from '@heroicons/react/24/outline';
+import { XMarkIcon, CheckIcon, ArrowDownTrayIcon, ExclamationTriangleIcon } from '@heroicons/react/24/outline';
 import { Provider } from '@/lib/types/provider';
 import Image from 'next/image';
 
@@ -29,6 +29,13 @@ interface ProviderViewModalProps {
   isOpen: boolean;
   onClose: () => void;
   provider: ProviderWithMedia | null;
+}
+
+interface Notification {
+  id: string;
+  type: 'info' | 'success' | 'error';
+  message: string;
+  autoClose?: boolean;
 }
 
 const fetchCoordinates = async (address: {
@@ -99,6 +106,25 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
   const [isLoadingCoordinates, setIsLoadingCoordinates] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [currentDownloadFile, setCurrentDownloadFile] = useState<string>('');
+
+  // Notification functions
+  const addNotification = (notification: Omit<Notification, 'id'>) => {
+    const id = Date.now().toString();
+    const newNotification = { ...notification, id };
+    setNotifications(prev => [...prev, newNotification]);
+    
+    if (notification.autoClose !== false) {
+      setTimeout(() => {
+        removeNotification(id);
+      }, 5000);
+    }
+  };
+
+  const removeNotification = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+  };
 
   useEffect(() => {
     const getCoordinates = async () => {
@@ -150,6 +176,7 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
 
     setIsDownloading(true);
     setDownloadProgress(0);
+    setCurrentDownloadFile('');
 
     const allMedia = [
       ...provider.media.images.map((img, index) => ({
@@ -165,20 +192,53 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
     const totalFiles = allMedia.length;
     let completedFiles = 0;
 
+    // Show initial download notification
+    addNotification({
+      type: 'info',
+      message: `Letöltés kezdődik... ${totalFiles} fájl letöltése`,
+      autoClose: false
+    });
+
     for (const media of allMedia) {
       try {
+        setCurrentDownloadFile(media.filename);
+        
+        // Show progress notification
+        addNotification({
+          type: 'info',
+          message: `Letöltés: ${media.filename} (${completedFiles + 1}/${totalFiles})`,
+          autoClose: false
+        });
+
         await downloadFile(media.url, media.filename);
         completedFiles++;
         setDownloadProgress((completedFiles / totalFiles) * 100);
-        // Add a small delay between downloads to prevent browser throttling
-        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Add 3 second delay between downloads
+        if (completedFiles < totalFiles) {
+          await new Promise(resolve => setTimeout(resolve, 3000));
+        }
       } catch (error) {
         console.error(`Error downloading ${media.filename}:`, error);
+        addNotification({
+          type: 'error',
+          message: `Hiba történt a fájl letöltése közben: ${media.filename}`,
+          autoClose: true
+        });
       }
     }
 
     setIsDownloading(false);
     setDownloadProgress(0);
+    setCurrentDownloadFile('');
+    
+    // Clear previous notifications and show success
+    setNotifications([]);
+    addNotification({
+      type: 'success',
+      message: `Sikeres letöltés! ${completedFiles} fájl sikeresen letöltve.`,
+      autoClose: true
+    });
   };
 
   if (!provider) return null;
@@ -226,7 +286,16 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                         className="inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         <ArrowDownTrayIcon className="h-5 w-5 mr-2" />
-                        {isDownloading ? `Letöltés... ${Math.round(downloadProgress)}%` : 'Összes fájl letöltése'}
+                        {isDownloading ? (
+                          <span className="flex flex-col items-start">
+                            <span>{`Letöltés... ${Math.round(downloadProgress)}%`}</span>
+                            {currentDownloadFile && (
+                              <span className="text-xs opacity-75 truncate max-w-32">
+                                {currentDownloadFile}
+                              </span>
+                            )}
+                          </span>
+                        ) : 'Összes fájl letöltése'}
                       </button>
                     )}
                     <button
@@ -238,6 +307,70 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                     </button>
                   </div>
                 </Dialog.Title>
+
+                {/* Notification System */}
+                {notifications.length > 0 && (
+                  <div className="fixed top-4 right-4 z-50 space-y-2">
+                    {notifications.map((notification) => (
+                      <div
+                        key={notification.id}
+                        className={`p-4 rounded-lg shadow-lg max-w-sm ${
+                          notification.type === 'success' 
+                            ? 'bg-green-50 border border-green-200' 
+                            : notification.type === 'error' 
+                            ? 'bg-red-50 border border-red-200'
+                            : 'bg-blue-50 border border-blue-200'
+                        }`}
+                      >
+                        <div className="flex items-start">
+                          <div className="flex-shrink-0">
+                            {notification.type === 'success' && (
+                              <CheckIcon className="h-5 w-5 text-green-400" />
+                            )}
+                            {notification.type === 'error' && (
+                              <ExclamationTriangleIcon className="h-5 w-5 text-red-400" />
+                            )}
+                            {notification.type === 'info' && (
+                              <ArrowDownTrayIcon className="h-5 w-5 text-blue-400" />
+                            )}
+                          </div>
+                          <div className="ml-3 w-0 flex-1">
+                            <p className={`text-sm font-medium ${
+                              notification.type === 'success' 
+                                ? 'text-green-800' 
+                                : notification.type === 'error' 
+                                ? 'text-red-800'
+                                : 'text-blue-800'
+                            }`}>
+                              {notification.message}
+                            </p>
+                          </div>
+                          <div className="ml-4 flex-shrink-0 flex">
+                            <button
+                              type="button"
+                              className={`rounded-md inline-flex ${
+                                notification.type === 'success' 
+                                  ? 'text-green-400 hover:text-green-500' 
+                                  : notification.type === 'error' 
+                                  ? 'text-red-400 hover:text-red-500'
+                                  : 'text-blue-400 hover:text-blue-500'
+                              } focus:outline-none focus:ring-2 focus:ring-offset-2 ${
+                                notification.type === 'success' 
+                                  ? 'focus:ring-green-500' 
+                                  : notification.type === 'error' 
+                                  ? 'focus:ring-red-500'
+                                  : 'focus:ring-blue-500'
+                              }`}
+                              onClick={() => removeNotification(notification.id)}
+                            >
+                              <XMarkIcon className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
 
                 <div className="mt-2 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
