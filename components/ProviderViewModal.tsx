@@ -68,14 +68,32 @@ const fetchCoordinates = async (address: {
   }
 };
 
-const CopyableBox = ({ label, value, children }: { label: string; value?: string; children?: React.ReactNode }) => {
+const CopyableBox = ({ label, value, children, onCopy }: { 
+  label: string; 
+  value?: string; 
+  children?: React.ReactNode; 
+  onCopy?: (message: string) => void; 
+}) => {
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
     if (value) {
-      await navigator.clipboard.writeText(value);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      try {
+        await navigator.clipboard.writeText(value);
+        setCopied(true);
+        
+        // Show notification
+        if (onCopy) {
+          onCopy(`"${label}" másolva a vágólapra!`);
+        }
+        
+        setTimeout(() => setCopied(false), 2000);
+      } catch (error) {
+        console.error('Failed to copy:', error);
+        if (onCopy) {
+          onCopy(`HIBA: Nem sikerült másolni: ${label}`);
+        }
+      }
     }
   };
 
@@ -124,6 +142,14 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
 
   const removeNotification = (id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
+  };
+
+  const handleCopyNotification = (message: string) => {
+    const isError = message.startsWith('HIBA:');
+    addNotification({ 
+      type: isError ? 'error' : 'success', 
+      message: isError ? message.replace('HIBA: ', '') : message 
+    });
   };
 
   useEffect(() => {
@@ -374,18 +400,18 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
 
                 <div className="mt-2 space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <CopyableBox label="Kategória" value={provider.category} />
-                    <CopyableBox label="Email (10. variant)" value={provider.email} />
-                    <CopyableBox label="Telefonszám (3. variant)" value={provider.phoneNumber} />
-                    <CopyableBox label="Minimum ár (1. variant)" value={`${provider.minPrice} Ft`} />
-                    <CopyableBox label="Maximum ár (2. variant)" value={`${provider.maxPrice} Ft`} />
+                    <CopyableBox label="Kategória" value={provider.category} onCopy={handleCopyNotification} />
+                    <CopyableBox label="Email (10. variant)" value={provider.email} onCopy={handleCopyNotification} />
+                    <CopyableBox label="Telefonszám (3. variant)" value={provider.phoneNumber} onCopy={handleCopyNotification} />
+                    <CopyableBox label="Minimum ár (1. variant)" value={`${provider.minPrice} Ft`} onCopy={handleCopyNotification} />
+                    <CopyableBox label="Maximum ár (2. variant)" value={`${provider.maxPrice} Ft`} onCopy={handleCopyNotification} />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <CopyableBox label="Cím (6. variant)" value={`${provider.address.street} ${provider.houseNumber}`} />
-                    <CopyableBox label="Irányítószám (6. variant)" value={provider.address.zipCode || ''} />
-                    <CopyableBox label="Város (6. variant)" value={provider.address.city} />
-                    <CopyableBox label="Ország (6. variant)" value={provider.address.state} />
+                    <CopyableBox label="Cím (6. variant)" value={`${provider.address.street} ${provider.houseNumber}`} onCopy={handleCopyNotification} />
+                    <CopyableBox label="Irányítószám (6. variant)" value={provider.address.zipCode || ''} onCopy={handleCopyNotification} />
+                    <CopyableBox label="Város (6. variant)" value={provider.address.city} onCopy={handleCopyNotification} />
+                    <CopyableBox label="Ország (6. variant)" value={provider.address.state} onCopy={handleCopyNotification} />
                     {isLoadingCoordinates ? (
                       <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
                         <div className="text-sm font-medium text-gray-900 mb-1">Koordináták</div>
@@ -396,10 +422,12 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                         <CopyableBox 
                           label="Hosszúság (5. variant)" 
                           value={coordinates.lng.toFixed(6)} 
+                          onCopy={handleCopyNotification}
                         />
                         <CopyableBox 
                           label="Szélesség (4. variant)" 
                           value={coordinates.lat.toFixed(6)} 
+                          onCopy={handleCopyNotification}
                         />
                       </>
                     ) : (
@@ -413,7 +441,7 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                   {(provider.instagram || provider.facebook || provider.tiktok) && (
                     <div className="space-y-2">
                       {provider.instagram && (
-                        <CopyableBox label="Instagram (7. variant)" value={provider.instagram}>
+                        <CopyableBox label="Instagram (7. variant)" value={provider.instagram} onCopy={handleCopyNotification}>
                           <a
                             target="_blank"
                             rel="noopener noreferrer"
@@ -425,7 +453,7 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                         </CopyableBox>
                       )}
                       {provider.facebook && (
-                        <CopyableBox label="Facebook (8. variant)" value={provider.facebook}>
+                        <CopyableBox label="Facebook (8. variant)" value={provider.facebook} onCopy={handleCopyNotification}>
                           <a
                             target="_blank"
                             rel="noopener noreferrer"
@@ -437,7 +465,7 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                         </CopyableBox>
                       )}
                       {provider.tiktok && (
-                        <CopyableBox label="TikTok (9. variant)" value={provider.tiktok}>
+                        <CopyableBox label="TikTok (9. variant)" value={provider.tiktok} onCopy={handleCopyNotification}>
                           <a
                             target="_blank"
                             rel="noopener noreferrer"
@@ -455,10 +483,12 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                     <CopyableBox 
                       label="Létrehozva" 
                       value={new Date(provider.createdAt).toLocaleString('hu-HU')} 
+                      onCopy={handleCopyNotification}
                     />
                     <CopyableBox 
                       label="Módosítva" 
                       value={new Date(provider.updatedAt).toLocaleString('hu-HU')} 
+                      onCopy={handleCopyNotification}
                     />
                   </div>
 
