@@ -340,7 +340,7 @@ export default function ProviderViewModal({ isOpen, onClose, provider }: Provide
                     {notifications.map((notification) => (
                       <div
                         key={notification.id}
-                        className={`p-4 rounded-lg shadow-lg max-w-sm ${
+                        className={`p-4 w-[200px] min-w-fit rounded-lg shadow-lg ${
                           notification.type === 'success' 
                             ? 'bg-green-50 border border-green-200' 
                             : notification.type === 'error' 
